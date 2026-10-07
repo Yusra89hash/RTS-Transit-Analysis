@@ -1,6 +1,7 @@
 #%% imports
 import pandas as pd
 import zipfile 
+from pathlib import Path
 from datetime import datetime, timedelta
 gtfs = "data/raw/rts_gtfs_fall2026.zip"
 
@@ -74,7 +75,7 @@ def active_services(date):
 
     return active
 
-active_services("20260907")
+active_services("20260902")
 
 
 # %% counts departures per stop
@@ -97,8 +98,41 @@ def stop_departures(date):
     stop_visits = stop_visits[valid_ride]
 
     #counts how many buses leave each stop
-    departures = stop_visits.grouby("stop_id").size()
+    departures = stop_visits.groupby("stop_id").size()
     return departures
-test_departures = stop_departures("20260902")
-print(test_departures.sum())
-print(len(test_departures))
+test_dep = stop_departures("20260902")
+
+# %% find the busiest wednesday 
+def busiest_wednesday():
+    first_date = datetime.strptime(calendar["start_date"].min(), "%Y%m%d")
+    last_date = datetime.strptime(calendar["end_date"].max(), "%Y%m%d")
+
+    #all wednesdays in that time range
+    wednesdays = pd.date_range(first_date, last_date, freq ="W-WED")
+
+    #counts trips on each wednesday and keeps the one with highest frequency
+    best_wed = "" 
+    most_trips = 0
+    for day in wednesdays:
+        date = day.strftime("%Y%m%d")
+        active = active_services(date)
+        num_trips = trips["service_id"].isin(active).sum()
+        if num_trips > most_trips:
+            most_trips = num_trips
+            best_wed = date
+
+    return best_wed
+service_date = busiest_wednesday()
+departures = stop_departures(service_date)
+
+# %% tracks how many buses leave a certain stop
+#looks up each stop's departure count 
+stop_counts = stops[["stop_id", "stop_name", "stop_lat", "stop_lon"]].copy()
+stop_counts["departures"] = stop_counts["stop_id"].map(departures).fillna(0).astype(int)
+
+#makes sure output folder exists
+processed = Path("data/processed")
+if not processed.exists():
+    processed.mkdir()
+#save file
+stop_counts.to_csv(processed/ "stops.csv", index=False)
