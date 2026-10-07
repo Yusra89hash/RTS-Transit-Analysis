@@ -26,4 +26,7 @@ with zipfile.ZipFile("data/raw/rts_gtfs.zip") as zf:
             gtfs_dict[fname] = pd.read_csv(f, dtype=str)
 
 
+# %% strip whitespace
+gtfs_dict["trips"]["service_id"] = gtfs_dict["trips"]["service_id"].str.strip()
+gtfs_dict["trips"]["service_id"].unique()
 # %%
