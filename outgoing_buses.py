@@ -3,6 +3,8 @@ import pandas as pd
 import zipfile 
 from datetime import datetime, timedelta
 gtfs = "data/raw/rts_gtfs_fall2026.zip"
+
+
 #%% what's in the zip
 with zipfile.ZipFile(gtfs) as zf:
     gtfs_files = zf.namelist()
@@ -36,11 +38,10 @@ trips = gtfs_dict["trips"]
 stop_times = gtfs_dict["stop_times"]
 stops = gtfs_dict["stops"]
 
+
 # %%
 gtfs_dict["calendar"]
-gtfs_dict["trips"]["service_id"].unique()
-# %%
-gtfs_dict["calendar"]
+
 # %%
 gtfs_dict["calendar_dates"]
 
@@ -72,8 +73,32 @@ def active_services(date):
     active -= removed
 
     return active
-active_services("20260902")
+
+active_services("20260907")
 
 
-# %%
+# %% counts departures per stop
 
+def stop_departures(date):
+    #finds active services
+    active = active_services(date)
+
+    #keeps only trips on active sched
+    valid_trips = trips["service_id"].isin(active)
+    active_trips = trips[valid_trips]
+
+    #matches each stop visit to its trip, keeping only active visits
+    active_trip_ids = active_trips["trip_id"]
+    is_active_visit = stop_times["trip_id"].isin(active_trip_ids)
+    stop_visits = stop_times[is_active_visit]
+
+    #removes stops where riders cant get on the bus
+    valid_ride = stop_visits["pickup_type"] != "1"
+    stop_visits = stop_visits[valid_ride]
+
+    #counts how many buses leave each stop
+    departures = stop_visits.grouby("stop_id").size()
+    return departures
+test_departures = stop_departures("20260902")
+print(test_departures.sum())
+print(len(test_departures))
