@@ -136,3 +136,4 @@ if not processed.exists():
     processed.mkdir()
 #save file
 stop_counts.to_csv(processed/ "stops.csv", index=False)
+# %%

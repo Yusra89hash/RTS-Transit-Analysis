@@ -36,3 +36,11 @@ rows = res.json()
 #each row after header is one census tract
 survey_res = pd.DataFrame(rows[1:],columns=rows[0])
 
+#%% converts census numbers from text into actual numbers
+for col in survey_res.columns:
+    #census data cols all start with B
+    if col.startswith("B"):
+        survey_res[col] = pd.to_numeric(survey_res[col])
+survey_res.dtypes
+
+#%%
