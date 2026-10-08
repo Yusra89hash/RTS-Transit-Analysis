@@ -131,9 +131,6 @@ stop_counts = stops[["stop_id", "stop_name", "stop_lat", "stop_lon"]].copy()
 stop_counts["departures"] = stop_counts["stop_id"].map(departures).fillna(0).astype(int)
 
 #makes sure output folder exists
-processed = Path("data/processed")
-if not processed.exists():
-    processed.mkdir()
-#save file
-stop_counts.to_csv(processed/ "stops.csv", index=False)
+data_path = Path("data")
+stop_counts.to_csv(data_path/ "stops.csv", index=False)
 # %%
