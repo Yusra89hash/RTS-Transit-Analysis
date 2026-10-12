@@ -10,99 +10,138 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    /*header on top, sidebar on the left, map fills the rest*/
+    
     body {
       margin: 0;
       font-family: Arial, sans-serif;
+      background: #ffede1;
+      color: #1f2d3d;
     }
-    /*uf blue header with an orange line underneath*/
+    
     header {
-      padding: 12px 16px;
+      padding: 16px;
       background: #0021a5;
       color: white;
-      border-bottom: 4px solid #fa4616;
+      text-align: center;
     }
     header h1 {
       margin: 0;
-      font-size: 20px;
+      font-size: 32px;
     }
     header p {
-      margin: 4px 0 0 0;
-      font-size: 14px;
-      color: #dbe2f8;
+      margin: 6px 0 0 0;
+      font-size: 17px;
+      font-weight: bold;
     }
+   
     main {
-      display: flex;
-      height: calc(100vh - 76px);
+      padding: 12px 32px;
     }
-    /*sidebar with findings, view buttons, details and gap list*/
-    #sidebar {
-      width: 320px;
-      overflow-y: auto;
-      padding: 8px 16px 16px 16px;
-      box-sizing: border-box;
-      background: #f7f9fb;
-      border-right: 1px solid #dddddd;
-    }
-    #sidebar h2 {
-      font-size: 15px;
+    
+    h2 {
       margin: 16px 0 8px 0;
-      color: #0021a5;
-    }
-    .stat {
-      margin-bottom: 10px;
-      font-size: 14px;
-    }
-    .stat strong {
-      display: block;
-      font-size: 18px;
+      font-size: 26px;
       color: #fa4616;
     }
+
+   
+    #top-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    #top-text {
+      flex: 1;
+    }
+    #findings,
+    #gap-list {
+      margin: 0;
+      padding-left: 24px;
+      font-size: 19px;
+      line-height: 30px;
+    }
+    #gap-list li {
+      cursor: pointer;
+    }
+    #gap-list li:hover {
+      color: #0021a5;
+      text-decoration: underline;
+    }
+ 
+    #bus-box {
+      width: 320px;
+      display: flex;
+      justify-content: center;
+    }
+    #bus-icon {
+      width: 240px;
+    }
+  
+    #map-row {
+      display: flex;
+      gap: 20px;
+      margin-top: 28px;
+    }
+    #map-column {
+      flex: 1;
+    }
+    #view-buttons {
+      margin-bottom: 8px;
+    }
     #view-buttons button {
-      margin: 0 4px 6px 0;
-      padding: 6px 10px;
+      margin-right: 4px;
+      padding: 7px 12px;
       border: 1px solid #0021a5;
       border-radius: 4px;
       background: white;
       color: #0021a5;
+      font-size: 15px;
       cursor: pointer;
     }
     #view-buttons button.active {
       background: #0021a5;
       color: white;
     }
-    /*details for the clicked tract*/
-    #details {
-      font-size: 14px;
-      line-height: 20px;
-      padding: 8px 10px;
-      background: white;
-      border: 1px solid #dddddd;
+    #map {
+      height: 65vh;
+      min-height: 420px;
+      border: 2px solid #0021a5;
       border-radius: 4px;
     }
-    #gap-list {
-      margin: 0;
-      padding-left: 20px;
-      font-size: 14px;
+    #details {
+      width: 320px;
+      box-sizing: border-box;
+      margin-top: 44px;
+      padding: 14px;
+      background: white;
+      border-radius: 4px;
+      font-size: 16px;
+      line-height: 24px;
     }
-    #gap-list li {
-      margin-bottom: 6px;
+
+
+    #what-now {
+      margin: 28px 0;
+      padding: 8px 28px 18px 28px;
+      border: 3px solid #0021a5;
+      background: white;
+    }
+    #what-now h2 {
       color: #0021a5;
-      cursor: pointer;
     }
-    #gap-list li:hover {
-      text-decoration: underline;
+    #what-now ul {
+      margin: 0;
+      padding-left: 24px;
+      font-size: 19px;
+      line-height: 30px;
+      color: #0021a5;
     }
-    /*map takes up the rest of the width*/
-    #map {
-      flex: 1;
-    }
-    /*legend box in the corner*/
+
     .legend {
       background: white;
       padding: 8px 10px;
-      font-size: 13px;
-      line-height: 20px;
+      font-size: 14px;
+      line-height: 22px;
       border-radius: 4px;
     }
     .legend span {
@@ -112,36 +151,72 @@
       margin-right: 6px;
       vertical-align: middle;
     }
+
+    @media (max-width: 900px) {
+      #top-row,
+      #map-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #bus-box {
+        width: auto;
+      }
+      #bus-icon {
+        width: 160px;
+      }
+      #details {
+        width: auto;
+        margin-top: 0;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h1>RTS Transit Analysis: where Gainesville's buses miss the people who need them</h1>
-    <p>Bus service vs. transit need for every scored census tract (Fall 2026 RTS schedule, ACS 2020-2024). Click a tract or a list item for details.</p>
+    <h1>RTS Transit Analysis</h1>
+    <p>Gainesville's bus service vs transit need, comparing RTS's 2023-24 and fall 2026 schedules</p>
   </header>
 
   <main>
-    <aside id="sidebar">
-      <h2>key findings</h2>
-      <div id="summary"></div>
+    <!--key findings and biggest gaps-->
+    <section id="top-row">
+      <div id="top-text">
+        <h2>Key Findings</h2>
+        <ul id="findings"></ul>
 
-      <h2>map view</h2>
-      <div id="view-buttons">
-        <button id="view-gap" class="active">gap</button>
-        <button id="view-need">need</button>
-        <button id="view-service">service</button>
-        <button id="view-change">service change</button>
+        <h2>Biggest Gaps</h2>
+        <ol id="gap-list"></ol>
       </div>
+      <div id="bus-box">
+        <img id="bus-icon" src="RTS.png" alt="RTS bus icon">
+      </div>
+    </section>
 
-      <h2>tract details</h2>
-      <div id="details">click a tract on the map or in the list below</div>
+    <!--map with view buttons-->
+    <section id="map-row">
+      <div id="map-column">
+        <div id="view-buttons">
+          <button id="view-gap" class="active">gap</button>
+          <button id="view-need">need</button>
+          <button id="view-service">service</button>
+          <button id="view-change">service change</button>
+        </div>
+       
+        <div id="map"></div>
+      </div>
+      <div id="details">click a neighborhood on the map or in biggest gaps to see its details</div>
+    </section>
 
-      <h2>biggest gaps</h2>
-      <ol id="gap-list"></ol>
-    </aside>
-
-    <!--leaflet map-->
-    <div id="map"></div>
+    <!--recommendations-->
+    <section id="what-now">
+      <h2>What Now?</h2>
+      <ul>
+        <li>Bring service back to the neighborhoods with the biggest gaps first, like tracts 19.02 and 18.03</li>
+        <li>Base future cuts on need instead of cutting everywhere the same (high need areas lost 22% of nearby buses vs 20% in low need areas)</li>
+        <li>Use on demand service like RTS Route 600 in areas where people live too spread out for a full bus route</li>
+        <li>Run this analysis every time RTS changes the schedule to see who gets affected before it happens</li>
+      </ul>
+    </section>
   </main>
 
   <script src="map.js"></script>

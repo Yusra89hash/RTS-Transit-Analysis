@@ -10,12 +10,15 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 //which view the map is showing: gap, need, service or change
 let currentView = "gap";
 
-//the drawn tracts, and a lookup from tract id to its shape so the sidebar can find it
+//the drawn tracts, and a lookup from tract id to its shape so the gap list can find it
 let tractLayer = null;
 const tractShapes = {};
 
 //tract id of the tract that was clicked, null until one is clicked
 let selectedGeoid = null;
+
+//how many neighborhoods to show in biggest gaps
+const gapsToShow = 3;
 
 //colors for gap, orange = more need than service, blue = more service than need (uf colors)
 function gapColor(gap) {
@@ -174,7 +177,7 @@ function tractDetails(tractInfo) {
   return details;
 }
 
-//shows a tract's details in the sidebar and highlights it on the map
+//shows a tract's details next to the map and highlights it
 function showDetails(tractInfo) {
   document.getElementById("details").innerHTML = tractDetails(tractInfo);
   selectedGeoid = tractInfo.GEOID;
@@ -263,14 +266,15 @@ document.getElementById("view-change").addEventListener("click", function () {
   showView("change");
 });
 
-//zooms to a tract and shows its details
+//scrolls down to the map, zooms to a tract and shows its details
 function zoomToTract(geoid) {
+  document.getElementById("map").scrollIntoView({ behavior: "smooth" });
   const shape = tractShapes[geoid];
   map.fitBounds(shape.getBounds(), { maxZoom: 14 });
   showDetails(shape.feature.properties);
 }
 
-//sidebar list of the 10 biggest gaps, click one to zoom to it
+//biggest gaps list, click one to zoom to it on the map
 function buildGapList(features) {
   //sort tracts by gap rank, 1 first
   const sortedFeatures = features.slice();
@@ -279,7 +283,7 @@ function buildGapList(features) {
   });
 
   const gapList = document.getElementById("gap-list");
-  for (let i = 0; i < 10; i = i + 1) {
+  for (let i = 0; i < gapsToShow; i = i + 1) {
     const tractInfo = sortedFeatures[i].properties;
     const tractName = tractInfo.NAME_y.split(";")[0];
 
@@ -292,20 +296,22 @@ function buildGapList(features) {
   }
 }
 
-//fills the key findings box from summary.json made by location.py
+//fills the key findings list from summary.json made by location.py
 function showSummary(summary) {
-  let summaryText = "";
-  summaryText = summaryText + '<div class="stat"><strong>' + summary.underserved_tracts + " of " + summary.scored_tracts + "</strong>neighborhoods underserved</div>";
-  summaryText = summaryText + '<div class="stat"><strong>' + summary.underserved_residents.toLocaleString() + "</strong>residents in underserved neighborhoods</div>";
-  summaryText = summaryText + '<div class="stat"><strong>' + toPercent(summary.car_free_beyond_walk) + "</strong>of car-free households live beyond a 5 min walk of a stop</div>";
-  summaryText = summaryText + '<div class="stat"><strong>' + toChange(summary.departures_2026 / summary.departures_2023 - 1) + "</strong>weekday bus departures, 2023-24 to fall 2026</div>";
-  summaryText = summaryText + '<div class="stat"><strong>' + toChange(summary.high_need_change) + " vs " + toChange(summary.low_need_change) + "</strong>change in nearby buses, high need vs low need neighborhoods</div>";
-  document.getElementById("summary").innerHTML = summaryText;
+  //percent fewer weekday departures in fall 2026 than 2023-24
+  const departureDrop = Math.round((1 - summary.departures_2026 / summary.departures_2023) * 100);
+
+  let findingsText = "";
+  findingsText = findingsText + "<li>" + summary.underserved_tracts + " of " + summary.scored_tracts + " neighborhoods are underserved</li>";
+  findingsText = findingsText + "<li>" + summary.underserved_residents.toLocaleString() + " residents live in underserved neighborhoods</li>";
+  findingsText = findingsText + "<li>" + toPercent(summary.car_free_beyond_walk) + " of car free households live beyond a 5 minute walk of a stop</li>";
+  findingsText = findingsText + "<li>A " + departureDrop + "% decrease in weekday bus departures from 2023-24 to fall 2026</li>";
+  document.getElementById("findings").innerHTML = findingsText;
 }
 
 //loads the data made by location.py and builds the dashboard
 async function loadDashboard() {
-  //headline numbers for the findings box
+  //numbers for key findings
   const summaryResponse = await fetch("../data/summary.json");
   const summary = await summaryResponse.json();
   showSummary(summary);
@@ -317,11 +323,11 @@ async function loadDashboard() {
   tractLayer = L.geoJSON(scoredTracts, {
     style: tractStyle,
     onEachFeature: function (feature, layer) {
-      //clicking a tract shows its details in the sidebar
+      //clicking a tract shows its details next to the map
       layer.on("click", function () {
         showDetails(feature.properties);
       });
-      //save each shape by tract id so the sidebar can find it
+      //save each shape by tract id so the gap list can find it
       tractShapes[feature.properties.GEOID] = layer;
     }
   });
