@@ -10,74 +10,74 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 //which view the map is showing: gap, need, service or change
 let currentView = "gap";
 
-//the drawn tracts and tract id lookup 
+//the drawn tracts, and a lookup from tract id to its shape so the sidebar can find it
 let tractLayer = null;
 const tractShapes = {};
 
 //tract id of the tract that was clicked, null until one is clicked
 let selectedGeoid = null;
 
-//colors for gap, red = more need than service, blue = more service than need
+//colors for gap, orange = more need than service, blue = more service than need (uf colors)
 function gapColor(gap) {
   if (gap > 30) {
-    return "#b2182b";
+    return "#c2360f";
   } else if (gap > 15) {
-    return "#ef8a62";
+    return "#fa4616";
   } else if (gap > 0) {
-    return "#fddbc7";
+    return "#fdb592";
   } else if (gap > -15) {
-    return "#d1e5f0";
+    return "#a9b8ee";
   } else if (gap > -30) {
-    return "#67a9cf";
+    return "#3a5bd1";
   } else {
-    return "#2166ac";
+    return "#0021a5";
   }
 }
 
-//colors for need score, darker red = more need
+//colors for need score, darker orange = more need
 function needColor(score) {
   if (score >= 75) {
-    return "#a50f15";
+    return "#c2360f";
   } else if (score >= 60) {
-    return "#de2d26";
+    return "#fa4616";
   } else if (score >= 45) {
-    return "#fb6a4a";
+    return "#fc8a5e";
   } else if (score >= 30) {
-    return "#fcae91";
+    return "#fdc3a8";
   } else {
-    return "#fee5d9";
+    return "#fee6db";
   }
 }
 
 //colors for service score, darker blue = more service
 function serviceColor(score) {
   if (score >= 75) {
-    return "#08519c";
+    return "#0021a5";
   } else if (score >= 60) {
-    return "#3182bd";
+    return "#3a5bd1";
   } else if (score >= 45) {
-    return "#6baed6";
+    return "#6f86df";
   } else if (score >= 30) {
-    return "#bdd7e7";
+    return "#a9b8ee";
   } else {
-    return "#eff3ff";
+    return "#dbe2f8";
   }
 }
 
-//colors for change in buses nearby, red = lost service, blue = gained service
+//colors for change in buses nearby, orange = lost service, blue = gained service, gray = no data
 function changeColor(change) {
   if (change === null) {
     return "#bbbbbb";
   } else if (change <= -0.4) {
-    return "#b2182b";
+    return "#c2360f";
   } else if (change <= -0.2) {
-    return "#ef8a62";
+    return "#fa4616";
   } else if (change < 0) {
-    return "#fddbc7";
+    return "#fdb592";
   } else if (change < 0.2) {
-    return "#d1e5f0";
+    return "#a9b8ee";
   } else {
-    return "#67a9cf";
+    return "#3a5bd1";
   }
 }
 
@@ -185,23 +185,23 @@ function showDetails(tractInfo) {
 const legendItems = {
   gap: {
     title: "need minus service",
-    items: [["#b2182b", "+30 or more"], ["#ef8a62", "+15 to +30"], ["#fddbc7", "0 to +15"],
-            ["#d1e5f0", "0 to -15"], ["#67a9cf", "-15 to -30"], ["#2166ac", "-30 or less"]]
+    items: [["#c2360f", "+30 or more"], ["#fa4616", "+15 to +30"], ["#fdb592", "0 to +15"],
+            ["#a9b8ee", "0 to -15"], ["#3a5bd1", "-15 to -30"], ["#0021a5", "-30 or less"]]
   },
   need: {
     title: "need score",
-    items: [["#a50f15", "75+"], ["#de2d26", "60 to 75"], ["#fb6a4a", "45 to 60"],
-            ["#fcae91", "30 to 45"], ["#fee5d9", "under 30"]]
+    items: [["#c2360f", "75+"], ["#fa4616", "60 to 75"], ["#fc8a5e", "45 to 60"],
+            ["#fdc3a8", "30 to 45"], ["#fee6db", "under 30"]]
   },
   service: {
     title: "service score",
-    items: [["#08519c", "75+"], ["#3182bd", "60 to 75"], ["#6baed6", "45 to 60"],
-            ["#bdd7e7", "30 to 45"], ["#eff3ff", "under 30"]]
+    items: [["#0021a5", "75+"], ["#3a5bd1", "60 to 75"], ["#6f86df", "45 to 60"],
+            ["#a9b8ee", "30 to 45"], ["#dbe2f8", "under 30"]]
   },
   change: {
     title: "weekday buses nearby, 2023-24 to fall 2026",
-    items: [["#b2182b", "lost 40% or more"], ["#ef8a62", "lost 20 to 40%"], ["#fddbc7", "lost 0 to 20%"],
-            ["#d1e5f0", "gained 0 to 20%"], ["#67a9cf", "gained 20% or more"], ["#bbbbbb", "no buses in 2023-24"]]
+    items: [["#c2360f", "lost 40% or more"], ["#fa4616", "lost 20 to 40%"], ["#fdb592", "lost 0 to 20%"],
+            ["#a9b8ee", "gained 0 to 20%"], ["#3a5bd1", "gained 20% or more"], ["#bbbbbb", "no buses in 2023-24"]]
   }
 };
 
@@ -321,13 +321,13 @@ async function loadDashboard() {
       layer.on("click", function () {
         showDetails(feature.properties);
       });
-      //saves each shape by tract id so the sidebar can find it
+      //save each shape by tract id so the sidebar can find it
       tractShapes[feature.properties.GEOID] = layer;
     }
   });
   tractLayer.addTo(map);
 
-  //zooms so every scored tract fits on screen
+  //zoom so every scored tract fits on screen
   map.fitBounds(tractLayer.getBounds());
 
   buildGapList(scoredTracts.features);
