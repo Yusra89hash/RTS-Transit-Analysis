@@ -1,0 +1,10 @@
+{
+  "scored_tracts": 51,
+  "underserved_tracts": 2,
+  "underserved_residents": 10319,
+  "car_free_beyond_walk": 0.37825435876863095,
+  "departures_2023": 51960,
+  "departures_2026": 40770,
+  "high_need_change": -0.22321437380982923,
+  "low_need_change": -0.20107522502341868
+}
